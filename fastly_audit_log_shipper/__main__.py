@@ -33,29 +33,31 @@ def main():
         written_entries = 0
         contents = []
         dio = io.BytesIO()
+
         offset = fastly_audit_log_shipper.s3_offsets.get_offset(
             args.customer_id,
             args.log_bucket,
             args.log_prefix,
         )
-        while written_entries < args.entries_per_file:
-            contents += fastly_audit_log_shipper.audit_log.retrieve_fastly_data(
-                offset,
-                args.fastly_token,
-                args.customer_id,
-                args.entries_per_scrape,
-            )
-            if contents:
-                written_entries += len(contents)
-            else:
-                break
+        contents += fastly_audit_log_shipper.audit_log.retrieve_fastly_data(
+            offset,
+            args.fastly_token,
+            args.customer_id,
+            args.entries_per_scrape,
+        )
 
+        if contents:
             for audit_log_entry in contents:
                 dio.write(json.dumps(audit_log_entry).encode('utf-8'))
                 fastly_audit_log_shipper.logger.warning(f'Written audit log evt {audit_log_entry["id"]}')
                 dio.write(os.linesep.encode('utf-8'))
+                written_entries += 1
+
+        else:
+            break
 
         if written_entries:
+
             dio.seek(0)
             while not fastly_audit_log_shipper.audit_log.write_s3_data(
                 dio,
@@ -63,20 +65,26 @@ def main():
                 args.log_prefix,
                 args.customer_id,
             ):
+
                 fastly_audit_log_shipper.logger.error('Can not write audit log data to destination, will retry')
                 time.sleep(5)
+
         else:
             break
+
+        full_page = int(written_entries == args.entries_per_scrape)
+
         while not fastly_audit_log_shipper.s3_offsets.update_offset(
-            offset + 1,
+            offset + full_page,
             args.customer_id,
             args.log_bucket,
             args.log_prefix,
         ):
+
             fastly_audit_log_shipper.logger.error('Can not update offsets, will retry')
             time.sleep(5)
 
-        if not contents:
+        if not full_page:
             break
 
 
