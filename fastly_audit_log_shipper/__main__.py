@@ -15,7 +15,6 @@ arg_parser.add_argument('--log-prefix', default='fastly-cdn-audit')
 arg_parser.add_argument('--fastly-token', default=os.environ.get('FASTLY_TOKEN'))
 arg_parser.add_argument('--customer-id', default=os.environ.get('FASTLY_CUSTOMER'))
 arg_parser.add_argument('--entries-per-scrape', type=int, default=10)
-arg_parser.add_argument('--entries-per-file', type=int, default=100)
 
 
 def main():
