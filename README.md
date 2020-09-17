@@ -3,7 +3,9 @@
 ### How it works ?
 
 Fastly Audit Log Shipper is an utility to replicate Fastly audit logs into S3-compatible storage.
+
 It achieves full log replication by keeping offset of last retrieved Fastly audit log page in S3.
+
 Designed to use as a Kubernetes CronJob.
 
 ### How to use
@@ -15,6 +17,9 @@ Designed to use as a Kubernetes CronJob.
 
 ```
 python3 -m fastly_audit_log_shipper --fastly-token='<fastly_token>' \
---log-bucket=<s3_bucket_name> --customer-id=<customer_id>
+   --log-bucket=<s3_bucket_name> --customer-id=<customer_id>
 ```
 
+### TODO
+- Automated tests
+- Reduce possibility of log line duplication by keeping last written event offset
